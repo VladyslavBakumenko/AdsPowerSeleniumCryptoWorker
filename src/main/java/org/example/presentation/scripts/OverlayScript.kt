@@ -31,20 +31,19 @@ class OverlayScript(private val driver: ChromeDriver) {
     private lateinit var approveOVButton: WebElement
     private lateinit var marketsButton: WebElement
 
+    private lateinit var openPositionNumberWebElement: WebElement
+    private lateinit var selectPositionToCloseButton: WebElement
+    private lateinit var closeAllPositionCheckBox: WebElement
+    private lateinit var closePositionButton: WebElement
+    private lateinit var confirmClosePositionButton: WebElement
+
     fun start() {
         driver.get("https://app.overlay.market/#/markets")
         closeAllOtherPages(driver)
         Thread.sleep(10000)
         connectWallet()
         startTransactionsLoop()
-    }
-
-    private fun startTransactionsLoop() {
-        repeat(Random.nextInt(2)) {
-            buildTransaction()
-            driver.get("https://app.overlay.market/#/markets")
-            Thread.sleep(Random.nextLong(10000, 20000))
-        }
+        closePosition()
     }
 
     private fun connectWallet() {
@@ -55,6 +54,14 @@ class OverlayScript(private val driver: ChromeDriver) {
         clickOnWebElementWithDelay(connectMetaMuskButton)
         getCurrentProcessedAdsPowerScriptDataTest()?.adsPowerProfileData?.metaMaskPassword?.let {
             UnlockMetaMaskScript(it).start()
+        }
+    }
+
+    private fun startTransactionsLoop() {
+        repeat(Random.nextInt(50, 150)) {
+            buildTransaction()
+            driver.get("https://app.overlay.market/#/markets")
+            Thread.sleep(Random.nextLong(10000, 20000))
         }
     }
 
@@ -79,6 +86,26 @@ class OverlayScript(private val driver: ChromeDriver) {
         val roundedOvlValue = BigDecimal(Random.nextDouble(0.1, 0.5)).setScale(1, RoundingMode.HALF_UP).toDouble()
         amountOvl.sendKeys(roundedOvlValue.toString())
         moveMouseAndClick(MouseClickCoordinates(Random.nextInt(1074, 1297), 538))
+    }
+
+    private fun closePosition() {
+        driver.get("https://app.overlay.market/#/positions")
+        Thread.sleep(5000)
+        initClosePositionPage()
+        clickOnWebElementWithDelay(selectPositionToCloseButton)
+        initCloseAllPositionCheckBox()
+        clickOnWebElementWithDelay(closeAllPositionCheckBox)
+        initClosePositionButton()
+        clickOnWebElementWithDelay(closePositionButton)
+        initConfirmClosePositionButton()
+        clickOnWebElementWithDelay(confirmClosePositionButton)
+        val openPositionNumber = openPositionNumberWebElement.text.toInt()
+        val test = openPositionNumber - Random.nextInt(openPositionNumber / 100 * 70, openPositionNumber)
+        repeat(test) {
+            repeat(2) {
+                moveMouseAndClick(MouseClickCoordinates(1384, 592))
+            }
+        }
     }
 
     private fun initConnectWalletButton() {
@@ -112,5 +139,22 @@ class OverlayScript(private val driver: ChromeDriver) {
 
     private fun initConfirmBuildButton() {
         approveOVButton = driver.findElement(By.xpath("/html/body/reach-portal/div[2]/div/div/div/div/button"))
+    }
+
+    private fun initClosePositionPage() {
+        openPositionNumberWebElement = driver.findElement(By.xpath("//*[@id=\"root\"]/div/div[3]/div/div[1]/div[2]/div/div[3]/div/div[2]"))
+        selectPositionToCloseButton = driver.findElement(By.xpath("//*[@id=\"root\"]/div/div[3]/div/div[2]/div[1]/button"))
+    }
+
+    private fun initCloseAllPositionCheckBox() {
+        closeAllPositionCheckBox = driver.findElement(By.xpath("//*[@id=\"root\"]/div/div[3]/div/div[2]/div[2]/div/div/div[1]/table/thead/tr/th[1]/span/span"))
+    }
+
+    private fun initClosePositionButton() {
+        closePositionButton = driver.findElement(By.xpath("//*[@id=\"root\"]/div/div[3]/div/div[2]/div[1]/div[2]/button[2]"))
+    }
+
+    private fun initConfirmClosePositionButton() {
+        confirmClosePositionButton = driver.findElement(By.xpath("//*[@id=\"root\"]/div/div[3]/div/div[2]/div[3]/div/div[4]/button[2]"))
     }
 }
