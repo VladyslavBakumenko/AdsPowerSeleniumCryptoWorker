@@ -36,3 +36,22 @@ fun switchDriverTo(driver: ChromeDriver, targetPageTitle: String) {
     }
     Thread.sleep(Random.nextLong(1000, 2000))
 }
+
+fun initProblemWebElement(initWebElementFunction: () -> Unit, error: (() -> Unit)? = null) {
+    var success = false
+    var counter = 0
+    while (!success) {
+        try {
+            if (counter == 3) {
+                success = true
+                error?.invoke()
+            }
+            Thread.sleep(3000)
+            counter++
+            initWebElementFunction.invoke()
+            success = true
+        } catch (e: Exception) {
+            println("Retrying -> $e")
+        }
+    }
+}

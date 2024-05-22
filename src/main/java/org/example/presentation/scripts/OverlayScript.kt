@@ -1,9 +1,7 @@
 package org.example.presentation.scripts
 
 import org.example.data.utils.dataClasses.MouseClickCoordinates
-import org.example.domain.utils.extensions.clickOnWebElementWithDelay
-import org.example.domain.utils.extensions.closeAllOtherPages
-import org.example.domain.utils.extensions.moveMouseAndClick
+import org.example.domain.utils.extensions.*
 import org.example.presentation.getCurrentProcessedAdsPowerScriptDataTest
 import org.openqa.selenium.By
 import org.openqa.selenium.WebElement
@@ -43,11 +41,10 @@ class OverlayScript(private val driver: ChromeDriver) {
         Thread.sleep(10000)
         connectWallet()
         startTransactionsLoop()
-        closePosition()
+        closePositions()
     }
 
     private fun connectWallet() {
-        println()
         initConnectWalletButton()
         clickOnWebElementWithDelay(connectWalletButton)
         initConnectMetaMuskButton()
@@ -58,27 +55,36 @@ class OverlayScript(private val driver: ChromeDriver) {
     }
 
     private fun startTransactionsLoop() {
-        repeat(Random.nextInt(50, 150)) {
+        repeat(Random.nextInt(1, 2)) {
             buildTransaction()
             driver.get("https://app.overlay.market/#/markets")
-            Thread.sleep(Random.nextLong(10000, 20000))
         }
     }
 
     private fun buildTransaction() {
-        initWebElements()
-        val correctWorkingMarketList = listOf(ethDominance, btcFrogs, inc, nodeMonkes)
-        clickOnWebElementWithDelay(correctWorkingMarketList[Random.nextInt(0, correctWorkingMarketList.size)])
-        initBuildingPositionPageWebElements()
-        setPositionFields()
-        initBuildingPositionApproveOVButton()
-        clickOnWebElementWithDelay(approveOVButton)
-        initConfirmBuildButton()
-        clickOnWebElementWithDelay(approveOVButton)
-        Thread.sleep(2000)
-        repeat(5) {
-            moveMouseAndClick(MouseClickCoordinates(1336, 604))
+        try {
+            initWebElements()
+            val correctWorkingMarketList = listOf(ethDominance, btcFrogs, inc, nodeMonkes)
+            clickOnWebElementWithDelay(correctWorkingMarketList[Random.nextInt(0, correctWorkingMarketList.size)])
+            initBuildingPositionPageWebElements()
+            setPositionFields()
+            initBuildingPositionApproveOVButton()
+            clickOnWebElementWithDelay(approveOVButton)
+            initConfirmBuildButton()
+            clickOnWebElementWithDelay(approveOVButton)
+            Thread.sleep(2000)
+            repeat(3) {
+                moveMouseAndClick(MouseClickCoordinates(1336, 604))
+            }
+        } catch (e: Exception) {
+            retryBuildTransaction()
         }
+    }
+
+    private fun retryBuildTransaction() {
+        driver.get("https://app.overlay.market/#/markets")
+        Thread.sleep(5000)
+        buildTransaction()
     }
 
     private fun setPositionFields() {
@@ -88,23 +94,29 @@ class OverlayScript(private val driver: ChromeDriver) {
         moveMouseAndClick(MouseClickCoordinates(Random.nextInt(1074, 1297), 538))
     }
 
-    private fun closePosition() {
-        driver.get("https://app.overlay.market/#/positions")
-        Thread.sleep(5000)
-        initClosePositionPage()
-        clickOnWebElementWithDelay(selectPositionToCloseButton)
-        initCloseAllPositionCheckBox()
-        clickOnWebElementWithDelay(closeAllPositionCheckBox)
-        initClosePositionButton()
-        clickOnWebElementWithDelay(closePositionButton)
-        initConfirmClosePositionButton()
-        clickOnWebElementWithDelay(confirmClosePositionButton)
-        val openPositionNumber = openPositionNumberWebElement.text.toInt()
-        val test = openPositionNumber - Random.nextInt(openPositionNumber / 100 * 70, openPositionNumber)
-        repeat(test) {
-            repeat(2) {
-                moveMouseAndClick(MouseClickCoordinates(1384, 592))
+    private fun closePositions() {
+        try {
+            driver.get("https://app.overlay.market/#/positions")
+            Thread.sleep(5000)
+            initClosePositionPage()
+            clickOnWebElementWithDelay(selectPositionToCloseButton)
+            initCloseAllPositionCheckBox()
+            clickOnWebElementWithDelay(closeAllPositionCheckBox)
+            initClosePositionButton()
+            clickOnWebElementWithDelay(closePositionButton)
+            initConfirmClosePositionButton()
+            clickOnWebElementWithDelay(confirmClosePositionButton)
+            val openPositionNumber = openPositionNumberWebElement.text.toInt()
+            val clicksToCloseOnePosition = 1.6
+            openPositionNumber / 100 * Random.nextInt(50, 80) / 1.6
+            repeat((openPositionNumber / clicksToCloseOnePosition).toInt()) {
+                repeat(2) {
+                    Thread.sleep(2000)
+                    moveMouseAndClick(MouseClickCoordinates(1384, 592))
+                }
             }
+        } catch (e: Exception) {
+            closePositions()
         }
     }
 
